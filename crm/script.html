@@ -1,0 +1,358 @@
+<script>
+// ── 状態管理 ──────────────────────────────────────────
+const state = {
+  customers: [],
+  config: {},
+  settings: {},
+  editingCustomerId: null,
+};
+
+// ── API呼び出し ──────────────────────────────────────────
+async function api(action, data = {}) {
+  return new Promise((resolve, reject) => {
+    google.script.run
+      .withSuccessHandler(res => {
+        if (res.ok) resolve(res.result);
+        else reject(new Error(res.error));
+      })
+      .withFailureHandler(err => reject(err))
+      .doPost_({ action, data });
+  });
+}
+
+// GASではdoPostを直接呼べないため、専用のラッパーを使う
+function callAPI(action, data, onSuccess, onError) {
+  google.script.run
+    .withSuccessHandler(res => {
+      if (res && res.ok) onSuccess(res.result);
+      else onError(new Error(res ? res.error : '不明なエラー'));
+    })
+    .withFailureHandler(err => onError(err))
+    .handleRequest(JSON.stringify({ action, data }));
+}
+
+// ── ページ切り替え ──────────────────────────────────────────
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.getElementById('nav-' + page).classList.add('active');
+
+  if (page === 'dashboard')   loadDashboard();
+  if (page === 'customers')   loadCustomers();
+  if (page === 'calendar')    loadCalendarEvents();
+  if (page === 'newsletter')  loadNewsletters();
+  if (page === 'settings')    loadSettings();
+}
+
+// ── ダッシュボード ──────────────────────────────────────────
+function loadDashboard() {
+  callAPI('getCustomers', {}, customers => {
+    state.customers = customers;
+
+    const total  = customers.length;
+    const tax    = customers.filter(c => c['契約種別'] === '税理士契約').length;
+    const sr     = customers.filter(c => c['契約種別'] === '社労士契約').length;
+    const both   = customers.filter(c => c['契約種別'] === '双方契約').length;
+
+    document.getElementById('stat-total').textContent = total;
+    document.getElementById('stat-tax').textContent   = tax;
+    document.getElementById('stat-sr').textContent    = sr;
+    document.getElementById('stat-both').textContent  = both;
+
+    // 最近登録された顧客5件
+    const recent = [...customers].slice(-5).reverse();
+    const recentEl = document.getElementById('recent-customers');
+    recentEl.innerHTML = recent.length
+      ? recent.map(c => `
+          <div class="event-item">
+            <div class="event-title">${esc(c['法人名／氏名'])}</div>
+            <div class="event-date">${contractBadge(c['契約種別'])} 担当：${esc(c['税理士担当'] || c['社会保険労務士担当'] || '未設定')}</div>
+          </div>`).join('')
+      : '<div class="empty-state">顧客が登録されていません</div>';
+  }, err => showToast('ダッシュボードの読み込みに失敗しました', 'error'));
+
+  callAPI('getUpcomingEvents', {}, events => {
+    const el = document.getElementById('upcoming-events');
+    el.innerHTML = events.length
+      ? events.map(e => `
+          <div class="event-item">
+            <div class="event-title">${esc(e.title)}</div>
+            <div class="event-date">${esc(e.start)}</div>
+          </div>`).join('')
+      : '<div class="empty-state">今後30日の予定はありません</div>';
+  }, () => {
+    document.getElementById('upcoming-events').innerHTML = '<div class="empty-state">カレンダーを読み込めませんでした</div>';
+  });
+}
+
+// ── 顧客管理 ──────────────────────────────────────────
+function loadCustomers() {
+  callAPI('getCustomers', {}, customers => {
+    state.customers = customers;
+    renderCustomerTable(customers);
+  }, err => showToast('顧客一覧の読み込みに失敗しました', 'error'));
+}
+
+function renderCustomerTable(customers) {
+  const tbody = document.getElementById('customer-tbody');
+  if (!customers.length) {
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center">顧客が登録されていません</td></tr>';
+    return;
+  }
+  tbody.innerHTML = customers.map(c => `
+    <tr>
+      <td>${esc(c['顧客ID'])}</td>
+      <td><a href="#" onclick="showCustomerDetail('${esc(c['顧客ID'])}');return false;" style="color:var(--primary);text-decoration:none;font-weight:600;">${esc(c['法人名／氏名'])}</a></td>
+      <td>${contractBadge(c['契約種別'])}</td>
+      <td>${esc(c['税理士担当'] || c['社会保険労務士担当'] || '—')}</td>
+      <td>${c['決算期（月）'] ? c['決算期（月）'] + '月' : '—'}</td>
+      <td>${c['顧問料（月額・税抜）'] ? '¥' + Number(c['顧問料（月額・税抜）']).toLocaleString() : '—'}</td>
+      <td>${c['メールアドレス'] ? '<span style="color:var(--success)">●</span>' : '<span style="color:var(--border)">●</span>'}</td>
+      <td>
+        <button class="btn btn-sm btn-outline" onclick="showCustomerDetail('${esc(c['顧客ID'])}')">詳細</button>
+        <button class="btn btn-sm btn-secondary" onclick="openCustomerForm('${esc(c['顧客ID'])}')">編集</button>
+      </td>
+    </tr>`).join('');
+}
+
+function filterCustomers() {
+  const keyword      = document.getElementById('search-keyword').value;
+  const contractType = document.getElementById('search-contract').value;
+  callAPI('getCustomers', { keyword, contractType }, customers => {
+    state.customers = customers;
+    renderCustomerTable(customers);
+  }, () => {});
+}
+
+// ── 顧客詳細 ──────────────────────────────────────────
+function showCustomerDetail(customerId) {
+  callAPI('getCustomerById', { customerId }, customer => {
+    document.getElementById('detail-customer-name').textContent = customer['法人名／氏名'];
+    document.getElementById('btn-edit-customer').setAttribute('onclick', `openCustomerForm('${customerId}')`);
+
+    const items = [
+      ['顧客ID', customer['顧客ID']],
+      ['フリガナ', customer['フリガナ']],
+      ['電話番号', customer['電話番号']],
+      ['メールアドレス', customer['メールアドレス']],
+      ['住所', customer['住所']],
+      ['業種', customer['業種']],
+      ['従業員数', customer['従業員数'] ? customer['従業員数'] + '名' : '—'],
+      ['契約種別', customer['契約種別']],
+      ['決算期', customer['決算期（月）'] ? customer['決算期（月）'] + '月' : '—'],
+      ['顧問料（月額・税抜）', customer['顧問料（月額・税抜）'] ? '¥' + Number(customer['顧問料（月額・税抜）']).toLocaleString() : '—'],
+      ['決算料（税抜）', customer['決算料（税抜）'] ? '¥' + Number(customer['決算料（税抜）']).toLocaleString() : '—'],
+      ['税理士担当', customer['税理士担当']],
+      ['社労士担当', customer['社会保険労務士担当']],
+      ['契約開始日', customer['契約開始日']],
+      ['通信配信', customer['通信配信'] === true || customer['通信配信'] === 'TRUE' ? '配信する' : '配信しない'],
+      ['登録日', customer['登録日']],
+    ];
+
+    const detailHtml = `
+      <div class="detail-grid">
+        ${items.map(([label, val]) => `
+          <div class="detail-item">
+            <div class="detail-label">${esc(label)}</div>
+            <div class="detail-value">${esc(String(val || '—'))}</div>
+          </div>`).join('')}
+      </div>
+      ${customer['メモ'] ? `<div class="form-section"><h3 class="section-title">メモ</h3><p style="white-space:pre-wrap;font-size:13px;">${esc(customer['メモ'])}</p></div>` : ''}`;
+
+    document.getElementById('customer-detail-body').innerHTML = detailHtml;
+    openModal('modal-customer-detail');
+  }, err => showToast('顧客情報の取得に失敗しました', 'error'));
+}
+
+// ── 顧客フォーム ──────────────────────────────────────────
+function openCustomerForm(customerId = null) {
+  state.editingCustomerId = customerId;
+  document.getElementById('modal-customer-title').textContent = customerId ? '顧客編集' : '顧客登録';
+  const form = document.getElementById('customer-form');
+  form.reset();
+
+  // スタッフ選択肢を設定
+  const staffSelects = ['select-tax-staff', 'select-sr-staff'];
+  const staffList = state.config.staff || [];
+  staffSelects.forEach(id => {
+    const sel = document.getElementById(id);
+    sel.innerHTML = '<option value="">選択</option>' + staffList.map(s => `<option>${esc(s)}</option>`).join('');
+  });
+
+  if (customerId) {
+    callAPI('getCustomerById', { customerId }, customer => {
+      Object.entries(customer).forEach(([key, val]) => {
+        const el = form.querySelector(`[name="${key}"]`);
+        if (el) el.value = val === true ? 'true' : val === false ? 'false' : (val || '');
+      });
+      closeModal('modal-customer-detail');
+      openModal('modal-customer');
+    }, () => showToast('顧客情報の取得に失敗しました', 'error'));
+  } else {
+    openModal('modal-customer');
+  }
+}
+
+function submitCustomerForm() {
+  const form = document.getElementById('customer-form');
+  const data = {};
+  new FormData(form).forEach((val, key) => {
+    data[key] = val;
+  });
+  data['通信配信'] = data['通信配信'] === 'true';
+
+  const action = state.editingCustomerId ? 'updateCustomer' : 'createCustomer';
+  if (state.editingCustomerId) data.customerId = state.editingCustomerId;
+
+  callAPI(action, data, result => {
+    showToast(state.editingCustomerId ? '顧客情報を更新しました' : `顧客を登録しました（ID: ${result}）`, 'success');
+    closeModal('modal-customer');
+    loadCustomers();
+  }, err => showToast('保存に失敗しました: ' + err.message, 'error'));
+}
+
+// ── カレンダー ──────────────────────────────────────────
+function loadCalendarEvents() {
+  callAPI('getUpcomingEvents', {}, events => {
+    const el = document.getElementById('calendar-events');
+    el.innerHTML = events.length
+      ? events.map(e => `
+          <div class="event-item">
+            <div class="event-title">${esc(e.title)}</div>
+            <div class="event-date">📅 ${esc(e.start)} 〜 ${esc(e.end)}</div>
+            ${e.desc ? `<div style="font-size:12px;color:var(--text-sub);margin-top:4px;white-space:pre-line;">${esc(e.desc)}</div>` : ''}
+          </div>`).join('')
+      : '<div class="empty-state">今後30日の予定はありません</div>';
+  }, () => {
+    document.getElementById('calendar-events').innerHTML = '<div class="empty-state">カレンダーを読み込めませんでした</div>';
+  });
+}
+
+function syncDeadlines() {
+  if (!confirm('全顧客の申告期限をGoogleカレンダーに登録しますか？')) return;
+  callAPI('syncDeadlines', {}, result => {
+    showToast(result, 'success');
+    loadCalendarEvents();
+  }, err => showToast('同期に失敗しました: ' + err.message, 'error'));
+}
+
+// ── 事務所通信 ──────────────────────────────────────────
+function loadNewsletters() {
+  callAPI('getNewsletters', {}, newsletters => {
+    const tbody = document.getElementById('newsletter-tbody');
+    if (!newsletters.length) {
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center">事務所通信がありません</td></tr>';
+      return;
+    }
+    tbody.innerHTML = newsletters.map(n => `
+      <tr>
+        <td>${esc(n['通信ID'])}</td>
+        <td style="font-weight:600;">${esc(n['タイトル'])}</td>
+        <td>${esc(String(n['作成日'] || '').slice(0, 10))}</td>
+        <td>${esc(n['配信対象'])}</td>
+        <td>${n['配信済'] === true || n['配信済'] === 'TRUE'
+              ? '<span class="badge badge-green">配信済</span>'
+              : '<span class="badge badge-gray">未配信</span>'}</td>
+        <td>${n['配信数'] || 0}件</td>
+        <td>
+          ${n['配信済'] !== true && n['配信済'] !== 'TRUE'
+            ? `<button class="btn btn-sm btn-primary" onclick="sendNewsletter('${esc(n['通信ID'])}')">配信実行</button>`
+            : '<span style="color:var(--text-sub);font-size:12px;">配信完了</span>'}
+        </td>
+      </tr>`).join('');
+  }, () => showToast('事務所通信の読み込みに失敗しました', 'error'));
+}
+
+function openNewsletterForm() {
+  document.getElementById('newsletter-form').reset();
+  openModal('modal-newsletter');
+}
+
+function submitNewsletter(sendNow) {
+  const form = document.getElementById('newsletter-form');
+  const data = {};
+  new FormData(form).forEach((val, key) => { data[key] = val; });
+
+  callAPI('saveNewsletter', data, newsletterId => {
+    if (sendNow) {
+      callAPI('sendNewsletter', { newsletterId }, result => {
+        showToast(`配信完了：${result.success}件成功、${result.fail}件失敗`, 'success');
+        closeModal('modal-newsletter');
+        loadNewsletters();
+      }, err => showToast('配信に失敗しました: ' + err.message, 'error'));
+    } else {
+      showToast('下書きを保存しました', 'success');
+      closeModal('modal-newsletter');
+      loadNewsletters();
+    }
+  }, err => showToast('保存に失敗しました: ' + err.message, 'error'));
+}
+
+function sendNewsletter(newsletterId) {
+  if (!confirm('この事務所通信を配信しますか？')) return;
+  callAPI('sendNewsletter', { newsletterId }, result => {
+    showToast(`配信完了：${result.success}件成功、${result.fail}件失敗`, 'success');
+    loadNewsletters();
+  }, err => showToast('配信に失敗しました: ' + err.message, 'error'));
+}
+
+// ── 設定 ──────────────────────────────────────────
+function loadSettings() {
+  callAPI('getSettings', {}, settings => {
+    state.settings = settings;
+    const keys = ['事務所名','代表者名','住所','電話番号','メールアドレス','署名'];
+    document.getElementById('settings-content').innerHTML = `
+      <div class="detail-grid">
+        ${keys.map(k => `
+          <div class="detail-item">
+            <div class="detail-label">${esc(k)}</div>
+            <div class="detail-value">${esc(String(settings[k] || '未設定'))}</div>
+          </div>`).join('')}
+      </div>
+      <p style="margin-top:16px;font-size:12px;color:var(--text-sub);">※ 設定を変更するにはGoogleスプレッドシートの「設定」シートを直接編集してください。</p>`;
+  }, () => {
+    document.getElementById('settings-content').textContent = '設定を読み込めませんでした';
+  });
+}
+
+// ── モーダル ──────────────────────────────────────────
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// モーダル外クリックで閉じる
+document.querySelectorAll('.modal').forEach(modal => {
+  modal.addEventListener('click', e => {
+    if (e.target === modal) closeModal(modal.id);
+  });
+});
+
+// ── トースト ──────────────────────────────────────────
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (type ? ' ' + type : '');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ── ユーティリティ ──────────────────────────────────────────
+function esc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function contractBadge(type) {
+  const map = { '税理士契約': 'badge-blue', '社労士契約': 'badge-green', '双方契約': 'badge-orange' };
+  return `<span class="badge ${map[type] || 'badge-gray'}">${esc(type || '—')}</span>`;
+}
+
+// ── 初期化 ──────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  // 設定とマスタデータを先に読み込む
+  callAPI('getConfig', {}, config => {
+    state.config = config;
+  }, () => {});
+
+  loadDashboard();
+});
+</script>

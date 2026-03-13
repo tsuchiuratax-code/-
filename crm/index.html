@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>林税理士社労士事務所 CRM</title>
+  <?!= include('style'); ?>
+</head>
+<body>
+
+<!-- ナビゲーション -->
+<nav class="navbar">
+  <div class="navbar-brand">
+    <span class="navbar-icon">📋</span>
+    林税理士社労士事務所 CRM
+  </div>
+  <ul class="navbar-menu">
+    <li><a href="#" onclick="showPage('dashboard')" class="nav-link active" id="nav-dashboard">ダッシュボード</a></li>
+    <li><a href="#" onclick="showPage('customers')" class="nav-link" id="nav-customers">顧客管理</a></li>
+    <li><a href="#" onclick="showPage('calendar')" class="nav-link" id="nav-calendar">カレンダー</a></li>
+    <li><a href="#" onclick="showPage('newsletter')" class="nav-link" id="nav-newsletter">事務所通信</a></li>
+    <li><a href="#" onclick="showPage('settings')" class="nav-link" id="nav-settings">設定</a></li>
+  </ul>
+</nav>
+
+<div class="container">
+
+  <!-- ダッシュボード -->
+  <div id="page-dashboard" class="page active">
+    <h1 class="page-title">ダッシュボード</h1>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">総顧客数</div>
+        <div class="stat-value" id="stat-total">—</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-label">税理士契約</div>
+        <div class="stat-value" id="stat-tax">—</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">社労士契約</div>
+        <div class="stat-value" id="stat-sr">—</div>
+      </div>
+      <div class="stat-card orange">
+        <div class="stat-label">双方契約</div>
+        <div class="stat-value" id="stat-both">—</div>
+      </div>
+    </div>
+    <div class="dashboard-grid">
+      <div class="card">
+        <h2 class="card-title">今後30日のスケジュール</h2>
+        <div id="upcoming-events" class="event-list">読み込み中...</div>
+      </div>
+      <div class="card">
+        <h2 class="card-title">最近の顧客</h2>
+        <div id="recent-customers" class="event-list">読み込み中...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 顧客管理 -->
+  <div id="page-customers" class="page">
+    <div class="page-header">
+      <h1 class="page-title">顧客管理</h1>
+      <button class="btn btn-primary" onclick="openCustomerForm()">＋ 新規登録</button>
+    </div>
+
+    <!-- 検索フィルタ -->
+    <div class="card search-bar">
+      <input type="text" id="search-keyword" placeholder="顧客名・IDで検索..." class="input-field" oninput="filterCustomers()">
+      <select id="search-contract" class="input-field" onchange="filterCustomers()">
+        <option value="">すべての契約種別</option>
+        <option>税理士契約</option>
+        <option>社労士契約</option>
+        <option>双方契約</option>
+      </select>
+    </div>
+
+    <!-- 顧客一覧テーブル -->
+    <div class="card">
+      <div class="table-wrapper">
+        <table class="data-table" id="customer-table">
+          <thead>
+            <tr>
+              <th>顧客ID</th>
+              <th>法人名／氏名</th>
+              <th>契約種別</th>
+              <th>担当者</th>
+              <th>決算期</th>
+              <th>顧問料（月額）</th>
+              <th>メール</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="customer-tbody">
+            <tr><td colspan="8" class="text-center">読み込み中...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- カレンダー -->
+  <div id="page-calendar" class="page">
+    <div class="page-header">
+      <h1 class="page-title">カレンダー連携</h1>
+      <button class="btn btn-secondary" onclick="syncDeadlines()">申告期限を一括登録</button>
+    </div>
+    <div class="card">
+      <h2 class="card-title">今後30日のイベント</h2>
+      <div id="calendar-events" class="event-list">読み込み中...</div>
+    </div>
+  </div>
+
+  <!-- 事務所通信 -->
+  <div id="page-newsletter" class="page">
+    <div class="page-header">
+      <h1 class="page-title">事務所通信</h1>
+      <button class="btn btn-primary" onclick="openNewsletterForm()">＋ 新規作成</button>
+    </div>
+    <div class="card">
+      <div class="table-wrapper">
+        <table class="data-table" id="newsletter-table">
+          <thead>
+            <tr>
+              <th>通信ID</th>
+              <th>タイトル</th>
+              <th>作成日</th>
+              <th>配信対象</th>
+              <th>配信済</th>
+              <th>配信数</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="newsletter-tbody">
+            <tr><td colspan="7" class="text-center">読み込み中...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 設定 -->
+  <div id="page-settings" class="page">
+    <h1 class="page-title">設定</h1>
+    <div class="card">
+      <h2 class="card-title">事務所情報</h2>
+      <div id="settings-content">読み込み中...</div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<!-- モーダル：顧客登録・編集 -->
+<div id="modal-customer" class="modal">
+  <div class="modal-content modal-lg">
+    <div class="modal-header">
+      <h2 id="modal-customer-title">顧客登録</h2>
+      <button class="modal-close" onclick="closeModal('modal-customer')">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="customer-form">
+        <div class="form-section">
+          <h3 class="section-title">基本情報</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>法人名／氏名 <span class="required">*</span></label>
+              <input type="text" name="法人名／氏名" class="input-field" required>
+            </div>
+            <div class="form-group">
+              <label>フリガナ</label>
+              <input type="text" name="フリガナ" class="input-field">
+            </div>
+            <div class="form-group">
+              <label>電話番号</label>
+              <input type="tel" name="電話番号" class="input-field">
+            </div>
+            <div class="form-group">
+              <label>メールアドレス</label>
+              <input type="email" name="メールアドレス" class="input-field">
+            </div>
+            <div class="form-group span-2">
+              <label>住所</label>
+              <input type="text" name="住所" class="input-field">
+            </div>
+            <div class="form-group">
+              <label>業種</label>
+              <input type="text" name="業種" class="input-field">
+            </div>
+            <div class="form-group">
+              <label>従業員数</label>
+              <input type="number" name="従業員数" class="input-field" min="0">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3 class="section-title">契約情報</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>契約種別 <span class="required">*</span></label>
+              <select name="契約種別" class="input-field" required>
+                <option value="">選択してください</option>
+                <option>税理士契約</option>
+                <option>社労士契約</option>
+                <option>双方契約</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>契約開始日</label>
+              <input type="date" name="契約開始日" class="input-field">
+            </div>
+            <div class="form-group">
+              <label>顧問料（月額・税抜）</label>
+              <input type="number" name="顧問料（月額・税抜）" class="input-field" min="0" step="1000">
+            </div>
+            <div class="form-group">
+              <label>決算料（税抜）</label>
+              <input type="number" name="決算料（税抜）" class="input-field" min="0" step="10000">
+            </div>
+            <div class="form-group">
+              <label>決算期（月）</label>
+              <select name="決算期（月）" class="input-field">
+                <option value="">選択</option>
+                <option>1</option><option>2</option><option>3</option>
+                <option>4</option><option>5</option><option>6</option>
+                <option>7</option><option>8</option><option>9</option>
+                <option>10</option><option>11</option><option>12</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>税理士担当</label>
+              <select name="税理士担当" class="input-field" id="select-tax-staff">
+                <option value="">選択</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>社労士担当</label>
+              <select name="社会保険労務士担当" class="input-field" id="select-sr-staff">
+                <option value="">選択</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>通信配信</label>
+              <select name="通信配信" class="input-field">
+                <option value="true">配信する</option>
+                <option value="false">配信しない</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3 class="section-title">メモ</h3>
+          <textarea name="メモ" class="input-field" rows="3" style="width:100%;resize:vertical;"></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-customer')">キャンセル</button>
+      <button class="btn btn-primary" onclick="submitCustomerForm()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- モーダル：顧客詳細 -->
+<div id="modal-customer-detail" class="modal">
+  <div class="modal-content modal-lg">
+    <div class="modal-header">
+      <h2 id="detail-customer-name">顧客詳細</h2>
+      <button class="modal-close" onclick="closeModal('modal-customer-detail')">✕</button>
+    </div>
+    <div class="modal-body" id="customer-detail-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-customer-detail')">閉じる</button>
+      <button class="btn btn-primary" id="btn-edit-customer" onclick="">編集</button>
+    </div>
+  </div>
+</div>
+
+<!-- モーダル：事務所通信 -->
+<div id="modal-newsletter" class="modal">
+  <div class="modal-content modal-lg">
+    <div class="modal-header">
+      <h2>事務所通信 作成</h2>
+      <button class="modal-close" onclick="closeModal('modal-newsletter')">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="newsletter-form">
+        <div class="form-group">
+          <label>タイトル <span class="required">*</span></label>
+          <input type="text" name="タイトル" class="input-field" required placeholder="例：2026年3月 事務所通信">
+        </div>
+        <div class="form-group">
+          <label>配信対象</label>
+          <select name="配信対象" class="input-field">
+            <option>全顧客</option>
+            <option>税理士のみ</option>
+            <option>社労士のみ</option>
+            <option>双方のみ</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>本文 <span class="required">*</span></label>
+          <textarea name="本文" class="input-field" rows="12" style="width:100%;resize:vertical;" required
+            placeholder="事務所通信の本文を入力してください。&#10;&#10;顧客名は自動的に「〇〇 御中」として差し込まれます。"></textarea>
+        </div>
+        <div class="form-group">
+          <label>作成者</label>
+          <input type="text" name="作成者" class="input-field">
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-newsletter')">キャンセル</button>
+      <button class="btn btn-outline" onclick="submitNewsletter(false)">下書き保存</button>
+      <button class="btn btn-primary" onclick="submitNewsletter(true)">保存して配信</button>
+    </div>
+  </div>
+</div>
+
+<!-- トースト通知 -->
+<div id="toast" class="toast"></div>
+
+<?!= include('script'); ?>
+</body>
+</html>
