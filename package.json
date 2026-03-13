@@ -6,10 +6,12 @@
   "type": "module",
   "scripts": {
     "start": "node src/server/index.js",
+    "dev": "node src/server/index.js",
     "check-rates": "node src/server/cli.js check",
     "send-notifications": "node src/server/cli.js notify"
   },
   "dependencies": {
+    "express": "^4.21.0",
     "nodemailer": "^6.9.0",
     "node-cron": "^3.0.0",
     "better-sqlite3": "^11.0.0"

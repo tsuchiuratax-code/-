@@ -2,7 +2,10 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { sendEmail } from './mailer.js';
-import { getActiveClients, getUnnotifiedChanges, logNotification, getLatestRates } from './database.js';
+import {
+  getActiveClients, getUnnotifiedChanges, logNotification,
+  getLatestRates, getNotifiableContacts, addHistory,
+} from './database.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const TEMPLATE_PATH = path.join(__dirname, 'templates/rate-change.html');
@@ -10,7 +13,7 @@ const TEMPLATE_PATH = path.join(__dirname, 'templates/rate-change.html');
 /**
  * HTMLテンプレートを読み込んで変数を埋め込む
  */
-function renderTemplate(contactName, rateChanges) {
+function renderTemplate(contactName, companyName, rateChanges) {
   let template = fs.readFileSync(TEMPLATE_PATH, 'utf-8');
 
   const rows = rateChanges.map((change) => {
@@ -44,57 +47,71 @@ function renderTemplate(contactName, rateChanges) {
 }
 
 /**
- * 全アクティブ顧客に未通知の料率変更をメール送信する
+ * 全アクティブ顧問先の通知対象連絡先に未通知の料率変更をメール送信する
  */
 export async function sendRateChangeNotifications() {
   const clients = getActiveClients();
 
   if (clients.length === 0) {
-    console.log('通知対象の顧客がいません。');
-    return { sent: 0, failed: 0 };
+    console.log('通知対象の顧問先がいません。');
+    return { sent: 0, failed: 0, skipped: 0 };
   }
 
   let sent = 0;
   let failed = 0;
+  let skipped = 0;
 
   for (const client of clients) {
     const changes = getUnnotifiedChanges(client.id);
 
     if (changes.length === 0) {
-      console.log(`${client.company_name}: 未通知の変更なし`);
+      skipped++;
       continue;
     }
 
-    console.log(`${client.company_name}: ${changes.length}件の料率変更を通知します...`);
+    // 料率変更通知を受け取る連絡先を取得
+    const contacts = getNotifiableContacts(client.id, 'rate_change');
 
-    try {
-      const html = renderTemplate(client.contact_name, changes);
-      await sendEmail(
-        client.email,
-        '【重要】社会保険料率変更のお知らせ',
-        html
-      );
-
-      for (const change of changes) {
-        logNotification(client.id, change.id, 'sent');
-      }
-      sent++;
-      console.log(`  → ${client.email} に送信完了`);
-    } catch (error) {
-      for (const change of changes) {
-        logNotification(client.id, change.id, 'failed', error.message);
-      }
-      failed++;
-      console.error(`  → ${client.email} への送信失敗: ${error.message}`);
+    if (contacts.length === 0) {
+      console.log(`${client.company_name}: 通知先が登録されていません`);
+      skipped++;
+      continue;
     }
+
+    console.log(`${client.company_name}: ${changes.length}件の変更を${contacts.length}名に通知...`);
+
+    for (const contact of contacts) {
+      try {
+        const html = renderTemplate(contact.contact_name, client.company_name, changes);
+        await sendEmail(
+          contact.email,
+          '【重要】社会保険料率変更のお知らせ',
+          html
+        );
+
+        for (const change of changes) {
+          logNotification(client.id, contact.id, change.id, 'sent');
+        }
+        sent++;
+        console.log(`  → ${contact.contact_name} (${contact.email}) 送信完了`);
+      } catch (error) {
+        for (const change of changes) {
+          logNotification(client.id, contact.id, change.id, 'failed', error.message);
+        }
+        failed++;
+        console.error(`  → ${contact.contact_name} (${contact.email}) 送信失敗: ${error.message}`);
+      }
+    }
+
+    addHistory(client.id, '通知', `料率変更通知を送信（${changes.length}件）`);
   }
 
-  console.log(`\n送信完了: 成功 ${sent}件, 失敗 ${failed}件`);
-  return { sent, failed };
+  console.log(`\n送信完了: 成功 ${sent}件, 失敗 ${failed}件, スキップ ${skipped}件`);
+  return { sent, failed, skipped };
 }
 
 /**
- * 現在の料率一覧をメールで送信する（全顧客向け）
+ * 現在の料率一覧をメールで送信する（全顧問先向け）
  */
 export async function sendCurrentRatesSummary() {
   const clients = getActiveClients();
@@ -122,17 +139,20 @@ export async function sendCurrentRatesSummary() {
   const sentDate = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日`;
 
   for (const client of clients) {
-    let html = template
-      .replace('{{CONTACT_NAME}}', client.contact_name)
-      .replace('{{RATE_ROWS}}', rows)
-      .replace('{{SENT_DATE}}', sentDate);
-    html = html.replace('変更のお知らせ', '現在の料率一覧');
+    const contacts = getNotifiableContacts(client.id, 'rate_change');
+    for (const contact of contacts) {
+      let html = template
+        .replace('{{CONTACT_NAME}}', contact.contact_name)
+        .replace('{{RATE_ROWS}}', rows)
+        .replace('{{SENT_DATE}}', sentDate);
+      html = html.replace('変更のお知らせ', '現在の料率一覧');
 
-    try {
-      await sendEmail(client.email, '社会保険料率一覧のご案内', html);
-      console.log(`${client.company_name} (${client.email}): 送信完了`);
-    } catch (error) {
-      console.error(`${client.company_name} (${client.email}): 送信失敗 - ${error.message}`);
+      try {
+        await sendEmail(contact.email, '社会保険料率一覧のご案内', html);
+        console.log(`${client.company_name} / ${contact.contact_name}: 送信完了`);
+      } catch (error) {
+        console.error(`${client.company_name} / ${contact.contact_name}: 送信失敗 - ${error.message}`);
+      }
     }
   }
 }

@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>顧問先管理 CRM</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic', Meiryo, sans-serif; background: #f0f2f5; color: #333; line-height: 1.6; }
+
+    /* ヘッダー */
+    .header { background: #1a365d; color: #fff; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+    .header h1 { font-size: 18px; font-weight: 600; }
+    .header-actions { display: flex; gap: 10px; }
+
+    /* レイアウト */
+    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+    /* カード */
+    .card { background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 16px; overflow: hidden; }
+    .card-header { padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+    .card-header h2 { font-size: 16px; color: #1a365d; }
+    .card-body { padding: 20px; }
+
+    /* ボタン */
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border: none; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+    .btn-primary { background: #2b6cb0; color: #fff; }
+    .btn-primary:hover { background: #2c5aa0; }
+    .btn-success { background: #2f855a; color: #fff; }
+    .btn-success:hover { background: #276749; }
+    .btn-danger { background: #c53030; color: #fff; }
+    .btn-danger:hover { background: #9b2c2c; }
+    .btn-outline { background: transparent; color: #2b6cb0; border: 1px solid #2b6cb0; }
+    .btn-outline:hover { background: #ebf4ff; }
+    .btn-sm { padding: 4px 10px; font-size: 12px; }
+    .btn-icon { padding: 6px 8px; }
+
+    /* テーブル */
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table th { background: #f7fafc; padding: 10px 12px; text-align: left; font-size: 12px; color: #718096; font-weight: 600; border-bottom: 2px solid #e2e8f0; white-space: nowrap; }
+    .data-table td { padding: 10px 12px; border-bottom: 1px solid #edf2f7; font-size: 13px; }
+    .data-table tr:hover { background: #f7fafc; }
+    .data-table .inactive { opacity: 0.5; }
+
+    /* バッジ */
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+    .badge-active { background: #c6f6d5; color: #276749; }
+    .badge-inactive { background: #fed7d7; color: #9b2c2c; }
+
+    /* フォーム */
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-group label { font-size: 12px; font-weight: 600; color: #4a5568; }
+    .form-group input, .form-group select, .form-group textarea { padding: 8px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; font-family: inherit; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #2b6cb0; box-shadow: 0 0 0 3px rgba(43,108,176,0.15); }
+    .form-section { margin-bottom: 20px; }
+    .form-section h3 { font-size: 14px; color: #2d3748; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 2px solid #e2e8f0; }
+    .form-actions { display: flex; gap: 10px; justify-content: flex-end; padding-top: 16px; border-top: 1px solid #e2e8f0; }
+
+    /* モーダル */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 200; justify-content: center; align-items: flex-start; padding: 40px 20px; overflow-y: auto; }
+    .modal-overlay.active { display: flex; }
+    .modal { background: #fff; border-radius: 12px; width: 100%; max-width: 800px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+    .modal-header { padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: #fff; z-index: 1; }
+    .modal-header h2 { font-size: 16px; color: #1a365d; }
+    .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: #718096; padding: 4px 8px; }
+    .modal-body { padding: 20px; }
+
+    /* タブ */
+    .tabs { display: flex; border-bottom: 2px solid #e2e8f0; margin-bottom: 16px; }
+    .tab { padding: 8px 16px; font-size: 13px; font-weight: 500; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; color: #718096; }
+    .tab.active { color: #2b6cb0; border-bottom-color: #2b6cb0; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* 通知バー */
+    .toast { position: fixed; bottom: 20px; right: 20px; padding: 12px 20px; border-radius: 8px; color: #fff; font-size: 13px; z-index: 300; transform: translateY(100px); opacity: 0; transition: all 0.3s; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast-success { background: #2f855a; }
+    .toast-error { background: #c53030; }
+
+    /* 検索 */
+    .search-bar { display: flex; gap: 10px; margin-bottom: 16px; }
+    .search-bar input { flex: 1; padding: 8px 12px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; }
+
+    /* 対応履歴 */
+    .history-list { list-style: none; }
+    .history-item { padding: 10px 0; border-bottom: 1px solid #edf2f7; display: flex; gap: 12px; font-size: 13px; }
+    .history-date { color: #718096; white-space: nowrap; min-width: 140px; }
+    .history-badge { padding: 1px 8px; border-radius: 4px; font-size: 11px; background: #edf2f7; color: #4a5568; white-space: nowrap; }
+
+    /* 空状態 */
+    .empty { text-align: center; padding: 40px; color: #a0aec0; }
+
+    /* 統計 */
+    .stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .stat-card { background: #fff; border-radius: 8px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .stat-value { font-size: 28px; font-weight: 700; color: #1a365d; }
+    .stat-label { font-size: 12px; color: #718096; }
+
+    @media (max-width: 768px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>顧問先管理 CRM</h1>
+  <div class="header-actions">
+    <button class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,0.3)" onclick="loadRates()">料率一覧</button>
+    <button class="btn btn-success" onclick="openNewClientModal()">+ 顧問先を追加</button>
+  </div>
+</div>
+
+<div class="container">
+  <!-- 統計 -->
+  <div class="stats" id="stats"></div>
+
+  <!-- 顧問先一覧 -->
+  <div class="card">
+    <div class="card-header">
+      <h2>顧問先一覧</h2>
+      <label style="font-size:13px"><input type="checkbox" id="showInactive" onchange="loadClients()"> 無効な顧問先も表示</label>
+    </div>
+    <div class="card-body" style="padding:0">
+      <div style="padding:12px 20px">
+        <div class="search-bar">
+          <input type="text" id="searchInput" placeholder="会社名・担当者名で検索..." oninput="filterClients()">
+        </div>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>状態</th>
+            <th>会社名</th>
+            <th>代表者</th>
+            <th>電話番号</th>
+            <th>業種</th>
+            <th>従業員数</th>
+            <th>健保種別</th>
+            <th>都道府県</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="clientsTable"></tbody>
+      </table>
+      <div id="clientsEmpty" class="empty" style="display:none">
+        顧問先が登録されていません。「+ 顧問先を追加」ボタンから登録してください。
+      </div>
+    </div>
+  </div>
+
+  <!-- 料率一覧 -->
+  <div class="card" id="ratesCard" style="display:none">
+    <div class="card-header">
+      <h2>現在の社会保険料率</h2>
+      <button class="btn btn-sm btn-outline" onclick="document.getElementById('ratesCard').style.display='none'">閉じる</button>
+    </div>
+    <div class="card-body" style="padding:0">
+      <table class="data-table">
+        <thead>
+          <tr><th>カテゴリ</th><th>料率名</th><th>料率</th><th>事業主</th><th>被保険者</th><th>施行日</th></tr>
+        </thead>
+        <tbody id="ratesTable"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- 顧問先 登録/編集モーダル -->
+<div class="modal-overlay" id="clientModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modalTitle">顧問先を追加</h2>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="clientForm" onsubmit="saveClient(event)">
+        <input type="hidden" id="clientId">
+
+        <div class="form-section">
+          <h3>基本情報</h3>
+          <div class="form-grid">
+            <div class="form-group"><label>会社名 *</label><input type="text" id="f_company_name" required></div>
+            <div class="form-group"><label>法人番号</label><input type="text" id="f_corporate_number" maxlength="13"></div>
+            <div class="form-group"><label>代表者名</label><input type="text" id="f_representative_name"></div>
+            <div class="form-group"><label>業種</label><input type="text" id="f_industry"></div>
+            <div class="form-group"><label>従業員数</label><input type="number" id="f_employee_count" min="0"></div>
+            <div class="form-group"><label>設立年月日</label><input type="date" id="f_establishment_date"></div>
+            <div class="form-group"><label>決算月</label><input type="text" id="f_fiscal_year_end" placeholder="例: 3月"></div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>連絡先</h3>
+          <div class="form-grid">
+            <div class="form-group"><label>郵便番号</label><input type="text" id="f_postal_code" placeholder="000-0000"></div>
+            <div class="form-group"><label>住所</label><input type="text" id="f_address"></div>
+            <div class="form-group"><label>電話番号</label><input type="text" id="f_phone"></div>
+            <div class="form-group"><label>FAX</label><input type="text" id="f_fax"></div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>契約情報</h3>
+          <div class="form-grid">
+            <div class="form-group"><label>契約開始日</label><input type="date" id="f_contract_start_date"></div>
+            <div class="form-group">
+              <label>契約種別</label>
+              <select id="f_contract_type">
+                <option value="">選択してください</option>
+                <option value="顧問契約">顧問契約</option>
+                <option value="スポット">スポット</option>
+                <option value="給与計算">給与計算</option>
+                <option value="助成金">助成金</option>
+              </select>
+            </div>
+            <div class="form-group"><label>月額顧問料（円）</label><input type="number" id="f_monthly_fee" min="0"></div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>社会保険情報</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>健康保険の種類</label>
+              <select id="f_health_insurance_type">
+                <option value="kyokai_kenpo">協会けんぽ</option>
+                <option value="kenpo_kumiai">健康保険組合</option>
+                <option value="kokuho_kumiai">国保組合</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>都道府県（協会けんぽ料率用）</label>
+              <select id="f_prefecture">
+                <option value="">選択してください</option>
+              </select>
+            </div>
+            <div class="form-group"><label>健康保険 適用事業所番号</label><input type="text" id="f_health_insurance_number"></div>
+            <div class="form-group"><label>厚生年金 事業所番号</label><input type="text" id="f_pension_number"></div>
+            <div class="form-group"><label>雇用保険 適用事業所番号</label><input type="text" id="f_employment_insurance_number"></div>
+            <div class="form-group"><label>労働保険番号</label><input type="text" id="f_workers_comp_number"></div>
+          </div>
+        </div>
+
+        <div class="form-section" id="contactSection">
+          <h3>主担当者（通知メール送信先）</h3>
+          <div class="form-grid">
+            <div class="form-group"><label>担当者名 *</label><input type="text" id="f_contact_name" required></div>
+            <div class="form-group"><label>メールアドレス *</label><input type="email" id="f_email" required></div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>メモ</h3>
+          <div class="form-group"><textarea id="f_notes" rows="3" style="width:100%"></textarea></div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-outline" onclick="closeModal()">キャンセル</button>
+          <button type="submit" class="btn btn-primary">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- 顧問先詳細モーダル -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="detailTitle">顧問先詳細</h2>
+      <button class="modal-close" onclick="closeDetailModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="tabs">
+        <div class="tab active" data-tab="info" onclick="switchTab(this)">基本情報</div>
+        <div class="tab" data-tab="contacts" onclick="switchTab(this)">連絡先</div>
+        <div class="tab" data-tab="history" onclick="switchTab(this)">対応履歴</div>
+        <div class="tab" data-tab="notifications" onclick="switchTab(this)">通知履歴</div>
+      </div>
+
+      <div class="tab-content active" id="tab-info">
+        <div id="detailInfo"></div>
+      </div>
+
+      <div class="tab-content" id="tab-contacts">
+        <div style="margin-bottom:12px">
+          <button class="btn btn-sm btn-primary" onclick="openAddContactForm()">+ 連絡先を追加</button>
+        </div>
+        <div id="addContactForm" style="display:none; margin-bottom:16px; padding:16px; background:#f7fafc; border-radius:8px;">
+          <div class="form-grid">
+            <div class="form-group"><label>氏名 *</label><input type="text" id="nc_name" required></div>
+            <div class="form-group"><label>メール *</label><input type="email" id="nc_email" required></div>
+            <div class="form-group"><label>部署</label><input type="text" id="nc_department"></div>
+            <div class="form-group"><label>役職</label><input type="text" id="nc_position"></div>
+            <div class="form-group"><label>電話</label><input type="text" id="nc_phone"></div>
+          </div>
+          <div style="margin-top:10px; display:flex; gap:8px">
+            <label style="font-size:12px"><input type="checkbox" id="nc_rate" checked> 料率変更通知</label>
+            <label style="font-size:12px"><input type="checkbox" id="nc_deadline" checked> 手続き期限通知</label>
+          </div>
+          <div style="margin-top:10px; display:flex; gap:8px">
+            <button class="btn btn-sm btn-primary" onclick="saveNewContact()">追加</button>
+            <button class="btn btn-sm btn-outline" onclick="document.getElementById('addContactForm').style.display='none'">取消</button>
+          </div>
+        </div>
+        <table class="data-table">
+          <thead><tr><th>氏名</th><th>部署</th><th>メール</th><th>料率通知</th><th>期限通知</th><th>操作</th></tr></thead>
+          <tbody id="contactsTable"></tbody>
+        </table>
+      </div>
+
+      <div class="tab-content" id="tab-history">
+        <div style="margin-bottom:12px">
+          <button class="btn btn-sm btn-primary" onclick="openAddHistoryForm()">+ メモを追加</button>
+        </div>
+        <div id="addHistoryForm" style="display:none; margin-bottom:16px; padding:16px; background:#f7fafc; border-radius:8px;">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>種別</label>
+              <select id="nh_type"><option>メモ</option><option>電話</option><option>メール</option><option>訪問</option><option>手続き</option></select>
+            </div>
+            <div class="form-group"><label>件名 *</label><input type="text" id="nh_subject" required></div>
+          </div>
+          <div class="form-group" style="margin-top:8px"><label>詳細</label><textarea id="nh_detail" rows="2" style="width:100%"></textarea></div>
+          <div style="margin-top:10px; display:flex; gap:8px">
+            <button class="btn btn-sm btn-primary" onclick="saveNewHistory()">追加</button>
+            <button class="btn btn-sm btn-outline" onclick="document.getElementById('addHistoryForm').style.display='none'">取消</button>
+          </div>
+        </div>
+        <ul class="history-list" id="historyList"></ul>
+      </div>
+
+      <div class="tab-content" id="tab-notifications">
+        <table class="data-table">
+          <thead><tr><th>日時</th><th>宛先</th><th>内容</th><th>状態</th></tr></thead>
+          <tbody id="notificationsTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- トースト -->
+<div class="toast" id="toast"></div>
+
+<script src="/crm-app.js"></script>
+</body>
+</html>
