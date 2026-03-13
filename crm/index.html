@@ -116,8 +116,23 @@
   <div id="page-newsletter" class="page">
     <div class="page-header">
       <h1 class="page-title">事務所通信</h1>
-      <button class="btn btn-primary" onclick="openNewsletterForm()">＋ 新規作成</button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-outline" onclick="openTemplateSelector()">📋 テンプレートから作成</button>
+        <button class="btn btn-primary" onclick="openNewsletterForm()">＋ 新規作成</button>
+      </div>
     </div>
+
+    <!-- 今月のテンプレート提案 -->
+    <div id="template-suggestion" class="card" style="background:#e8f0fe;border-color:#1a73e8;display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-size:12px;color:#1557b0;font-weight:700;margin-bottom:4px;">💡 今月のテンプレートがあります</div>
+          <div id="template-suggestion-title" style="font-weight:600;"></div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="useThisMonthTemplate()">このテンプレートを使う</button>
+      </div>
+    </div>
+
     <div class="card">
       <div class="table-wrapper">
         <table class="data-table" id="newsletter-table">
@@ -278,36 +293,59 @@
   </div>
 </div>
 
+<!-- モーダル：テンプレート選択 -->
+<div id="modal-template" class="modal">
+  <div class="modal-content" style="width:680px;">
+    <div class="modal-header">
+      <h2>📋 テンプレートを選択</h2>
+      <button class="modal-close" onclick="closeModal('modal-template')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--text-sub);font-size:13px;margin-bottom:16px;">月ごとの定型文をそのまま使用するか、編集してご利用ください。令和の年号は自動で入ります。</p>
+      <div id="template-list" style="display:flex;flex-direction:column;gap:8px;">読み込み中...</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-template')">キャンセル</button>
+    </div>
+  </div>
+</div>
+
 <!-- モーダル：事務所通信 -->
 <div id="modal-newsletter" class="modal">
   <div class="modal-content modal-lg">
     <div class="modal-header">
-      <h2>事務所通信 作成</h2>
+      <h2 id="newsletter-modal-title">事務所通信 作成</h2>
       <button class="modal-close" onclick="closeModal('modal-newsletter')">✕</button>
     </div>
     <div class="modal-body">
       <form id="newsletter-form">
-        <div class="form-group">
+        <div class="form-group" style="margin-bottom:14px;">
           <label>タイトル <span class="required">*</span></label>
-          <input type="text" name="タイトル" class="input-field" required placeholder="例：2026年3月 事務所通信">
+          <input type="text" name="タイトル" class="input-field" required placeholder="例：令和8年3月 事務所通信">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+          <div class="form-group">
+            <label>配信対象</label>
+            <select name="配信対象" class="input-field">
+              <option>全顧客</option>
+              <option>税理士のみ</option>
+              <option>社労士のみ</option>
+              <option>双方のみ</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>作成者</label>
+            <input type="text" name="作成者" class="input-field">
+          </div>
         </div>
         <div class="form-group">
-          <label>配信対象</label>
-          <select name="配信対象" class="input-field">
-            <option>全顧客</option>
-            <option>税理士のみ</option>
-            <option>社労士のみ</option>
-            <option>双方のみ</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>本文 <span class="required">*</span></label>
-          <textarea name="本文" class="input-field" rows="12" style="width:100%;resize:vertical;" required
-            placeholder="事務所通信の本文を入力してください。&#10;&#10;顧客名は自動的に「〇〇 御中」として差し込まれます。"></textarea>
-        </div>
-        <div class="form-group">
-          <label>作成者</label>
-          <input type="text" name="作成者" class="input-field">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+            <label>本文 <span class="required">*</span></label>
+            <span style="font-size:12px;color:var(--text-sub);">※ 顧客名は配信時に「〇〇 御中」として自動差し込み</span>
+          </div>
+          <textarea name="本文" id="newsletter-body" class="input-field" rows="16"
+            style="width:100%;resize:vertical;font-size:13px;line-height:1.8;" required
+            placeholder="事務所通信の本文を入力してください。"></textarea>
         </div>
       </form>
     </div>

@@ -40,6 +40,11 @@ function doPost(e) {
       case 'getNewsletters':       result = getNewsletters(); break;
       case 'sendNewsletter':       result = sendNewsletter(data.newsletterId); break;
 
+      // テンプレート
+      case 'getNewsletterTemplates': result = getNewsletterTemplates(); break;
+      case 'getNewsletterTemplate':  result = getNewsletterTemplate(data.key); break;
+      case 'getThisMonthTemplate':   result = getThisMonthTemplate(); break;
+
       // 設定
       case 'getSettings':          result = getSettings(); break;
       case 'getConfig':            result = {

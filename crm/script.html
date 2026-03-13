@@ -5,6 +5,8 @@ const state = {
   config: {},
   settings: {},
   editingCustomerId: null,
+  templates: [],
+  thisMonthTemplate: null,
 };
 
 // ── API呼び出し ──────────────────────────────────────────
@@ -239,6 +241,15 @@ function syncDeadlines() {
 
 // ── 事務所通信 ──────────────────────────────────────────
 function loadNewsletters() {
+  // 今月のテンプレート提案を表示
+  callAPI('getThisMonthTemplate', {}, tmpl => {
+    state.thisMonthTemplate = tmpl;
+    if (tmpl) {
+      document.getElementById('template-suggestion').style.display = 'block';
+      document.getElementById('template-suggestion-title').textContent = tmpl.title;
+    }
+  }, () => {});
+
   callAPI('getNewsletters', {}, newsletters => {
     const tbody = document.getElementById('newsletter-tbody');
     if (!newsletters.length) {
@@ -264,9 +275,61 @@ function loadNewsletters() {
   }, () => showToast('事務所通信の読み込みに失敗しました', 'error'));
 }
 
-function openNewsletterForm() {
+function openNewsletterForm(prefill = {}) {
   document.getElementById('newsletter-form').reset();
+  document.getElementById('newsletter-modal-title').textContent = '事務所通信 作成';
+  if (prefill.タイトル) document.querySelector('[name="タイトル"]').value = prefill.タイトル;
+  if (prefill.本文)     document.getElementById('newsletter-body').value = prefill.本文;
+  if (prefill.配信対象) document.querySelector('[name="配信対象"]').value = prefill.配信対象;
   openModal('modal-newsletter');
+}
+
+// ── テンプレート機能 ──────────────────────────────────────────
+function openTemplateSelector() {
+  callAPI('getNewsletterTemplates', {}, templates => {
+    state.templates = templates;
+
+    // 月順に並び替え
+    const monthOrder = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+    templates.sort((a, b) => monthOrder.indexOf(a.season) - monthOrder.indexOf(b.season));
+
+    const list = document.getElementById('template-list');
+    list.innerHTML = templates.map(t => `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#f8f9fa;border-radius:6px;border:1px solid var(--border);">
+        <div>
+          <div style="font-weight:600;font-size:13px;">${esc(t.title)}</div>
+          <div style="font-size:12px;color:var(--text-sub);margin-top:2px;">
+            <span class="badge badge-gray">${esc(t.season)}</span>
+            <span style="margin-left:6px;">${esc(t.target)}</span>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="useTemplate('${esc(t.key)}')">使用する</button>
+      </div>`).join('');
+    openModal('modal-template');
+  }, () => showToast('テンプレートの読み込みに失敗しました', 'error'));
+}
+
+function useTemplate(key) {
+  callAPI('getNewsletterTemplate', { key }, tmpl => {
+    closeModal('modal-template');
+    openNewsletterForm({
+      タイトル: tmpl.title,
+      本文: tmpl.body,
+      配信対象: tmpl.target === '全顧客' ? '全顧客'
+              : tmpl.target === '社労士のみ' ? '社労士のみ'
+              : tmpl.target === '税理士のみ' ? '税理士のみ' : '全顧客',
+    });
+    document.getElementById('newsletter-modal-title').textContent = '事務所通信 作成（テンプレートから）';
+  }, () => showToast('テンプレートの取得に失敗しました', 'error'));
+}
+
+function useThisMonthTemplate() {
+  if (!state.thisMonthTemplate) return;
+  openNewsletterForm({
+    タイトル: state.thisMonthTemplate.title,
+    本文: state.thisMonthTemplate.body,
+    配信対象: state.thisMonthTemplate.target || '全顧客',
+  });
 }
 
 function submitNewsletter(sendNow) {
