@@ -1,25 +1,81 @@
-import Database from 'better-sqlite3';
+import initSqlJs from 'sql.js';
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DB_PATH = path.join(__dirname, '../../data/insurance.db');
+const DATA_DIR = path.join(__dirname, '../../data');
+const DB_PATH = path.join(DATA_DIR, 'insurance.db');
 
 let db;
 
-export function getDatabase() {
-  if (!db) {
-    db = new Database(DB_PATH);
-    db.pragma('journal_mode = WAL');
-    db.pragma('foreign_keys = ON');
-    initializeDatabase();
+// sql.js の prepare/run/all/get を better-sqlite3 風に使えるラッパー
+function query(sql) {
+  return {
+    run(...params) {
+      db.run(sql, params);
+      const lastId = db.exec("SELECT last_insert_rowid() as id")[0]?.values[0][0];
+      const changes = db.getRowsModified();
+      saveDatabase();
+      return { lastInsertRowid: lastId, changes };
+    },
+    all(...params) {
+      const stmt = db.prepare(sql);
+      if (params.length > 0) stmt.bind(params);
+      const rows = [];
+      while (stmt.step()) {
+        rows.push(stmt.getAsObject());
+      }
+      stmt.free();
+      return rows;
+    },
+    get(...params) {
+      const stmt = db.prepare(sql);
+      if (params.length > 0) stmt.bind(params);
+      let row = null;
+      if (stmt.step()) {
+        row = stmt.getAsObject();
+      }
+      stmt.free();
+      return row;
+    },
+  };
+}
+
+function saveDatabase() {
+  const data = db.export();
+  fs.writeFileSync(DB_PATH, Buffer.from(data));
+}
+
+export async function initDatabase() {
+  if (db) return db;
+
+  const SQL = await initSqlJs();
+
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
   }
+
+  if (fs.existsSync(DB_PATH)) {
+    const fileBuffer = fs.readFileSync(DB_PATH);
+    db = new SQL.Database(fileBuffer);
+  } else {
+    db = new SQL.Database();
+  }
+
+  db.run("PRAGMA foreign_keys = ON");
+  createTables();
+  saveDatabase();
   return db;
 }
 
-function initializeDatabase() {
-  db.exec(`
-    -- 顧問先（メイン）
+export function getDatabase() {
+  if (!db) throw new Error('Database not initialized. Call initDatabase() first.');
+  return db;
+}
+
+function createTables() {
+  db.run(`
     CREATE TABLE IF NOT EXISTS clients (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       company_name TEXT NOT NULL,
@@ -46,9 +102,10 @@ function initializeDatabase() {
       active INTEGER DEFAULT 1,
       created_at TEXT DEFAULT (datetime('now', 'localtime')),
       updated_at TEXT DEFAULT (datetime('now', 'localtime'))
-    );
+    )
+  `);
 
-    -- 顧問先の連絡先（複数登録可）
+  db.run(`
     CREATE TABLE IF NOT EXISTS client_contacts (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       client_id INTEGER NOT NULL,
@@ -63,9 +120,10 @@ function initializeDatabase() {
       active INTEGER DEFAULT 1,
       created_at TEXT DEFAULT (datetime('now', 'localtime')),
       FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
-    );
+    )
+  `);
 
-    -- 対応履歴
+  db.run(`
     CREATE TABLE IF NOT EXISTS client_history (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       client_id INTEGER NOT NULL,
@@ -74,9 +132,10 @@ function initializeDatabase() {
       detail TEXT,
       created_at TEXT DEFAULT (datetime('now', 'localtime')),
       FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
-    );
+    )
+  `);
 
-    -- 保険料率
+  db.run(`
     CREATE TABLE IF NOT EXISTS insurance_rates (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       category TEXT NOT NULL,
@@ -87,9 +146,10 @@ function initializeDatabase() {
       effective_date TEXT NOT NULL,
       prefecture TEXT,
       created_at TEXT DEFAULT (datetime('now', 'localtime'))
-    );
+    )
+  `);
 
-    -- 通知ログ
+  db.run(`
     CREATE TABLE IF NOT EXISTS notification_log (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       client_id INTEGER NOT NULL,
@@ -101,10 +161,7 @@ function initializeDatabase() {
       FOREIGN KEY (client_id) REFERENCES clients(id),
       FOREIGN KEY (contact_id) REFERENCES client_contacts(id),
       FOREIGN KEY (rate_id) REFERENCES insurance_rates(id)
-    );
-
-    -- 旧テーブルからの移行チェック用
-    -- active列の存在確認などは省略（IF NOT EXISTSで新規作成のみ）
+    )
   `);
 }
 
@@ -113,7 +170,7 @@ function initializeDatabase() {
 // ========================
 
 export function addClient(data) {
-  const stmt = getDatabase().prepare(`
+  return query(`
     INSERT INTO clients (
       company_name, corporate_number, representative_name,
       postal_code, address, phone, fax,
@@ -125,8 +182,7 @@ export function addClient(data) {
     ) VALUES (
       ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
     )
-  `);
-  return stmt.run(
+  `).run(
     data.company_name, data.corporate_number || null, data.representative_name || null,
     data.postal_code || null, data.address || null, data.phone || null, data.fax || null,
     data.industry || null, data.employee_count || null, data.establishment_date || null, data.fiscal_year_end || null,
@@ -147,32 +203,31 @@ export function updateClient(id, data) {
   }
   fields.push("updated_at = datetime('now', 'localtime')");
   values.push(id);
-  const stmt = getDatabase().prepare(`UPDATE clients SET ${fields.join(', ')} WHERE id = ?`);
-  return stmt.run(...values);
+  return query(`UPDATE clients SET ${fields.join(', ')} WHERE id = ?`).run(...values);
 }
 
 export function getClient(id) {
-  return getDatabase().prepare('SELECT * FROM clients WHERE id = ?').get(id);
+  return query('SELECT * FROM clients WHERE id = ?').get(id);
 }
 
 export function getActiveClients() {
-  return getDatabase().prepare('SELECT * FROM clients WHERE active = 1 ORDER BY company_name').all();
+  return query('SELECT * FROM clients WHERE active = 1 ORDER BY company_name').all();
 }
 
 export function getAllClients() {
-  return getDatabase().prepare('SELECT * FROM clients ORDER BY active DESC, company_name').all();
+  return query('SELECT * FROM clients ORDER BY active DESC, company_name').all();
 }
 
 export function deactivateClient(id) {
-  return getDatabase().prepare("UPDATE clients SET active = 0, updated_at = datetime('now', 'localtime') WHERE id = ?").run(id);
+  return query("UPDATE clients SET active = 0, updated_at = datetime('now', 'localtime') WHERE id = ?").run(id);
 }
 
 export function activateClient(id) {
-  return getDatabase().prepare("UPDATE clients SET active = 1, updated_at = datetime('now', 'localtime') WHERE id = ?").run(id);
+  return query("UPDATE clients SET active = 1, updated_at = datetime('now', 'localtime') WHERE id = ?").run(id);
 }
 
 export function deleteClient(id) {
-  return getDatabase().prepare('DELETE FROM clients WHERE id = ?').run(id);
+  return query('DELETE FROM clients WHERE id = ?').run(id);
 }
 
 // ========================
@@ -180,11 +235,10 @@ export function deleteClient(id) {
 // ========================
 
 export function addContact(clientId, data) {
-  const stmt = getDatabase().prepare(`
+  return query(`
     INSERT INTO client_contacts (client_id, contact_name, department, position, email, phone, is_primary, notify_rate_change, notify_deadline)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-  return stmt.run(
+  `).run(
     clientId, data.contact_name, data.department || null, data.position || null,
     data.email, data.phone || null,
     data.is_primary ? 1 : 0, data.notify_rate_change !== false ? 1 : 0, data.notify_deadline !== false ? 1 : 0
@@ -200,21 +254,20 @@ export function updateContact(id, data) {
     values.push(typeof value === 'boolean' ? (value ? 1 : 0) : (value === '' ? null : value));
   }
   values.push(id);
-  const stmt = getDatabase().prepare(`UPDATE client_contacts SET ${fields.join(', ')} WHERE id = ?`);
-  return stmt.run(...values);
+  return query(`UPDATE client_contacts SET ${fields.join(', ')} WHERE id = ?`).run(...values);
 }
 
 export function getContacts(clientId) {
-  return getDatabase().prepare('SELECT * FROM client_contacts WHERE client_id = ? AND active = 1 ORDER BY is_primary DESC').all(clientId);
+  return query('SELECT * FROM client_contacts WHERE client_id = ? AND active = 1 ORDER BY is_primary DESC').all(clientId);
 }
 
 export function deleteContact(id) {
-  return getDatabase().prepare('UPDATE client_contacts SET active = 0 WHERE id = ?').run(id);
+  return query('UPDATE client_contacts SET active = 0 WHERE id = ?').run(id);
 }
 
 export function getNotifiableContacts(clientId, notificationType = 'rate_change') {
   const column = notificationType === 'rate_change' ? 'notify_rate_change' : 'notify_deadline';
-  return getDatabase().prepare(
+  return query(
     `SELECT * FROM client_contacts WHERE client_id = ? AND active = 1 AND ${column} = 1`
   ).all(clientId);
 }
@@ -224,14 +277,13 @@ export function getNotifiableContacts(clientId, notificationType = 'rate_change'
 // ========================
 
 export function addHistory(clientId, actionType, subject, detail = null) {
-  const stmt = getDatabase().prepare(
+  return query(
     'INSERT INTO client_history (client_id, action_type, subject, detail) VALUES (?, ?, ?, ?)'
-  );
-  return stmt.run(clientId, actionType, subject, detail);
+  ).run(clientId, actionType, subject, detail);
 }
 
 export function getHistory(clientId, limit = 50) {
-  return getDatabase().prepare(
+  return query(
     'SELECT * FROM client_history WHERE client_id = ? ORDER BY created_at DESC LIMIT ?'
   ).all(clientId, limit);
 }
@@ -241,17 +293,16 @@ export function getHistory(clientId, limit = 50) {
 // ========================
 
 export function addRate(category, rateName, ratePercent, employerShare, employeeShare, effectiveDate, prefecture = null) {
-  const stmt = getDatabase().prepare(
+  return query(
     `INSERT INTO insurance_rates (category, rate_name, rate_percent, employer_share, employee_share, effective_date, prefecture)
      VALUES (?, ?, ?, ?, ?, ?, ?)`
-  );
-  return stmt.run(category, rateName, ratePercent, employerShare, employeeShare, effectiveDate, prefecture);
+  ).run(category, rateName, ratePercent, employerShare, employeeShare, effectiveDate, prefecture);
 }
 
 export function getLatestRates(prefecture = null) {
   const where = prefecture ? 'AND (r1.prefecture = ? OR r1.prefecture IS NULL)' : '';
   const params = prefecture ? [prefecture] : [];
-  return getDatabase().prepare(`
+  return query(`
     SELECT r1.* FROM insurance_rates r1
     INNER JOIN (
       SELECT category, rate_name, COALESCE(prefecture, '') as pref, MAX(effective_date) as max_date
@@ -267,7 +318,7 @@ export function getLatestRates(prefecture = null) {
 }
 
 export function getRateChanges(sinceDate) {
-  return getDatabase().prepare(`
+  return query(`
     SELECT new_rate.*, old_rate.rate_percent as old_rate_percent,
            old_rate.employer_share as old_employer_share,
            old_rate.employee_share as old_employee_share
@@ -294,14 +345,13 @@ export function getRateChanges(sinceDate) {
 // ========================
 
 export function logNotification(clientId, contactId, rateId, status, errorMessage = null) {
-  const stmt = getDatabase().prepare(
+  return query(
     'INSERT INTO notification_log (client_id, contact_id, rate_id, status, error_message) VALUES (?, ?, ?, ?, ?)'
-  );
-  return stmt.run(clientId, contactId, rateId, status, errorMessage);
+  ).run(clientId, contactId, rateId, status, errorMessage);
 }
 
 export function getUnnotifiedChanges(clientId) {
-  return getDatabase().prepare(`
+  return query(`
     SELECT r.* FROM insurance_rates r
     WHERE r.id NOT IN (
       SELECT rate_id FROM notification_log
@@ -317,7 +367,7 @@ export function getUnnotifiedChanges(clientId) {
 }
 
 export function getNotificationHistory(clientId, limit = 50) {
-  return getDatabase().prepare(`
+  return query(`
     SELECT nl.*, ir.category, ir.rate_name, ir.rate_percent, ir.effective_date as rate_effective_date,
            cc.contact_name, cc.email
     FROM notification_log nl

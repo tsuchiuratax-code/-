@@ -3,7 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import cron from 'node-cron';
 import { loadConfig } from './config.js';
-import { getDatabase } from './database.js';
+import { initDatabase } from './database.js';
 import { seedRates, displayCurrentRates } from './rates.js';
 import { sendRateChangeNotifications } from './notification.js';
 import { testConnection } from './mailer.js';
@@ -16,7 +16,7 @@ async function main() {
   console.log('=== 社会保険料率変更 自動通知システム ===\n');
 
   // データベース初期化
-  getDatabase();
+  await initDatabase();
   console.log('データベースを初期化しました。');
 
   // サンプル料率データを登録

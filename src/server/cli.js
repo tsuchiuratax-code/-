@@ -1,4 +1,4 @@
-import { getDatabase } from './database.js';
+import { initDatabase } from './database.js';
 import { seedRates, displayCurrentRates, registerNewRate, getRecentChanges } from './rates.js';
 import { sendRateChangeNotifications, sendCurrentRatesSummary } from './notification.js';
 import { addClient, addContact, getActiveClients } from './database.js';
@@ -7,10 +7,9 @@ import { testConnection } from './mailer.js';
 const command = process.argv[2];
 const args = process.argv.slice(3);
 
-// データベース初期化
-getDatabase();
-
 async function run() {
+  // データベース初期化
+  await initDatabase();
   switch (command) {
     case 'check':
       seedRates();
