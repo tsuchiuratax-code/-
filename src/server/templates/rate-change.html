@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic', Meiryo, sans-serif; color: #333; line-height: 1.6; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: #2c5aa0; color: #fff; padding: 20px; text-align: center; border-radius: 4px 4px 0 0; }
+    .header h1 { margin: 0; font-size: 18px; }
+    .content { background: #f9f9f9; padding: 20px; border: 1px solid #e0e0e0; }
+    .rate-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+    .rate-table th { background: #e8eef6; padding: 10px; text-align: left; border: 1px solid #ccc; font-size: 13px; }
+    .rate-table td { padding: 10px; border: 1px solid #ccc; font-size: 13px; }
+    .change-up { color: #d32f2f; font-weight: bold; }
+    .change-down { color: #2e7d32; font-weight: bold; }
+    .category-header { background: #2c5aa0; color: #fff; }
+    .category-header td { font-weight: bold; font-size: 14px; }
+    .footer { padding: 15px 20px; font-size: 12px; color: #888; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 4px 4px; }
+    .note { background: #fff3e0; padding: 12px; border-left: 4px solid #ff9800; margin: 15px 0; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>社会保険料率 変更のお知らせ</h1>
+    </div>
+    <div class="content">
+      <p>{{CONTACT_NAME}} 様</p>
+      <p>いつもお世話になっております。<br>
+      以下の社会保険料率に変更がありましたのでお知らせいたします。</p>
+
+      <table class="rate-table">
+        <tr>
+          <th>項目</th>
+          <th>変更前</th>
+          <th>変更後</th>
+          <th>事業主負担</th>
+          <th>被保険者負担</th>
+          <th>施行日</th>
+        </tr>
+        {{RATE_ROWS}}
+      </table>
+
+      <div class="note">
+        <strong>ご注意：</strong>上記の料率変更に伴い、給与計算における控除額の変更が必要となる場合があります。
+        詳細については担当者までお問い合わせください。
+      </div>
+
+      <p>ご不明な点がございましたら、お気軽にお問い合わせください。</p>
+    </div>
+    <div class="footer">
+      <p>このメールは社会保険料率変更通知システムから自動送信されています。</p>
+      <p>送信日時: {{SENT_DATE}}</p>
+    </div>
+  </div>
+</body>
+</html>

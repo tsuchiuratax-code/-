@@ -1,0 +1,17 @@
+{
+  "name": "insurance-rate-notification",
+  "version": "1.0.0",
+  "description": "社会保険料率変更の自動メール通知システム",
+  "main": "src/server/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server/index.js",
+    "check-rates": "node src/server/cli.js check",
+    "send-notifications": "node src/server/cli.js notify"
+  },
+  "dependencies": {
+    "nodemailer": "^6.9.0",
+    "node-cron": "^3.0.0",
+    "better-sqlite3": "^11.0.0"
+  }
+}
