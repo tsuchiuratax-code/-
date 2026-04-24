@@ -3,67 +3,88 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title data-i18n="title">日本語サポート デモ</title>
+  <title data-i18n="title">ChatGPT 5 vs Claude スライド</title>
   <link rel="stylesheet" href="src/style.css">
 </head>
 <body>
-  <header>
-    <div class="header-inner">
-      <h1 data-i18n="appTitle">日本語サポート デモ</h1>
-      <div class="lang-switcher">
-        <button id="lang-ja" class="lang-btn active" onclick="setLanguage('ja')">日本語</button>
-        <button id="lang-en" class="lang-btn" onclick="setLanguage('en')">English</button>
-      </div>
+  <header class="topbar">
+    <h1 data-i18n="appTitle">ChatGPT 5 変更点とClaude比較</h1>
+    <div class="lang-switcher">
+      <button id="lang-ja" class="lang-btn active" onclick="setLanguage('ja')">日本語</button>
+      <button id="lang-en" class="lang-btn" onclick="setLanguage('en')">English</button>
     </div>
   </header>
 
-  <main>
-    <section class="hero">
-      <h2 data-i18n="heroTitle">ようこそ</h2>
-      <p data-i18n="heroDescription">このアプリは日本語と英語の両方に対応しています。言語切り替えボタンで表示言語を変更できます。</p>
+  <main class="deck-wrap">
+    <section class="deck-head">
+      <p class="kicker" data-i18n="kicker">スライド形式でサクッと理解</p>
+      <h2 data-i18n="deckTitle">ChatGPT 5で何が変わった？ Claudeよりどこが強い？</h2>
+      <p class="deck-note" data-i18n="deckNote">※ 実務で感じやすい差分に絞った要点比較です。用途によって最適解は変わります。</p>
     </section>
 
-    <section class="features">
-      <h2 data-i18n="featuresTitle">主な機能</h2>
-      <div class="feature-grid">
-        <div class="feature-card">
-          <div class="feature-icon">🌐</div>
-          <h3 data-i18n="feature1Title">多言語対応</h3>
-          <p data-i18n="feature1Desc">日本語・英語の切り替えをリアルタイムで行えます。</p>
+    <section class="slide-shell" aria-live="polite">
+      <article class="slide active" data-slide="0">
+        <span class="badge" data-i18n="slide1Badge">01 / 全体像</span>
+        <h3 data-i18n="slide1Title">ChatGPT 5の主要アップデート</h3>
+        <ul>
+          <li data-i18n="slide1Point1">推論の安定性が向上し、長い依頼でも回答のブレが減少。</li>
+          <li data-i18n="slide1Point2">長文コンテキスト処理の質が改善し、会話の文脈保持が強化。</li>
+          <li data-i18n="slide1Point3">テキスト・コード・要約・構成化の横断タスクがより一貫。</li>
+        </ul>
+      </article>
+
+      <article class="slide" data-slide="1">
+        <span class="badge" data-i18n="slide2Badge">02 / Claude比較</span>
+        <h3 data-i18n="slide2Title">Claudeより優れていると感じやすい点</h3>
+        <div class="compare-grid">
+          <div>
+            <h4 data-i18n="slide2Col1Title">ChatGPT 5の強み</h4>
+            <ul>
+              <li data-i18n="slide2Point1">曖昧な依頼を段階分解して、実行可能な手順に落とし込みやすい。</li>
+              <li data-i18n="slide2Point2">コード生成〜修正〜説明の往復が滑らかで、開発補助に強い。</li>
+              <li data-i18n="slide2Point3">出力スタイル制御（丁寧/簡潔/表形式など）の再現性が高い。</li>
+            </ul>
+          </div>
+          <div>
+            <h4 data-i18n="slide2Col2Title">使い分けの視点</h4>
+            <ul>
+              <li data-i18n="slide2Point4">長文読解や文章トーンはClaudeが好まれる場面もある。</li>
+              <li data-i18n="slide2Point5">最終的には「業務要件・精度・UI・コスト」で選ぶのが実用的。</li>
+            </ul>
+          </div>
         </div>
-        <div class="feature-card">
-          <div class="feature-icon">📝</div>
-          <h3 data-i18n="feature2Title">日本語入力</h3>
-          <p data-i18n="feature2Desc">ひらがな・カタカナ・漢字すべての入力に対応しています。</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">🔤</div>
-          <h3 data-i18n="feature3Title">フォント最適化</h3>
-          <p data-i18n="feature3Desc">日本語フォントを最適化し、読みやすい表示を実現します。</p>
-        </div>
-      </div>
+      </article>
+
+      <article class="slide" data-slide="2">
+        <span class="badge" data-i18n="slide3Badge">03 / 実務メリット</span>
+        <h3 data-i18n="slide3Title">ChatGPT 5が効くユースケース</h3>
+        <ul>
+          <li data-i18n="slide3Point1">要件定義: ふわっとした要望から仕様書の叩き台を高速作成。</li>
+          <li data-i18n="slide3Point2">開発: バグ調査、テスト観点、リファクタ提案を一気通貫で支援。</li>
+          <li data-i18n="slide3Point3">企画/営業: 複数案を比較し、説得力ある資料構成に整える。</li>
+        </ul>
+      </article>
+
+      <article class="slide" data-slide="3">
+        <span class="badge" data-i18n="slide4Badge">04 / すぐ使える</span>
+        <h3 data-i18n="slide4Title">精度を引き出す3つのプロンプト型</h3>
+        <ol>
+          <li data-i18n="slide4Point1">「目的・前提・制約・出力形式」を最初に固定する。</li>
+          <li data-i18n="slide4Point2">中間レビューを挟み、方向性ズレを早期修正する。</li>
+          <li data-i18n="slide4Point3">最後に「抜け漏れチェック」を指示して品質を底上げする。</li>
+        </ol>
+      </article>
     </section>
 
-    <section class="demo">
-      <h2 data-i18n="demoTitle">テキスト入力デモ</h2>
-      <div class="input-area">
-        <label for="text-input" data-i18n="inputLabel">日本語でテキストを入力してください：</label>
-        <textarea id="text-input" data-i18n-placeholder="inputPlaceholder" placeholder="ここに入力..."></textarea>
-        <div class="char-count">
-          <span data-i18n="charCount">文字数：</span>
-          <span id="count">0</span>
-        </div>
-        <button id="submit-btn" data-i18n="submitBtn" onclick="handleSubmit()">送信</button>
-      </div>
-      <div id="output" class="output" style="display:none;">
-        <h3 data-i18n="outputTitle">入力内容</h3>
-        <p id="output-text"></p>
-      </div>
-    </section>
+    <nav class="deck-controls" aria-label="slides">
+      <button id="prev-btn" class="nav-btn" data-i18n="prevBtn">← 前へ</button>
+      <div id="dots" class="dots" aria-hidden="true"></div>
+      <button id="next-btn" class="nav-btn" data-i18n="nextBtn">次へ →</button>
+    </nav>
   </main>
 
   <footer>
-    <p data-i18n="footer">© 2026 日本語サポート デモ</p>
+    <p data-i18n="footer">© 2026 AI比較スライド | ChatGPT 5 と Claude の実務目線まとめ</p>
   </footer>
 
   <script src="locales/ja.js"></script>
