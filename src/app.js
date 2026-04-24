@@ -1,39 +1,60 @@
 /**
- * アプリケーションメインスクリプト
- * テキスト入力デモの機能を管理する
+ * スライドデッキ制御
  */
 
-// 文字数カウント
-const textarea = document.getElementById('text-input');
-const countEl = document.getElementById('count');
+const slides = Array.from(document.querySelectorAll('.slide'));
+const prevBtn = document.getElementById('prev-btn');
+const nextBtn = document.getElementById('next-btn');
+const dotsEl = document.getElementById('dots');
 
-if (textarea && countEl) {
-  textarea.addEventListener('input', () => {
-    countEl.textContent = textarea.value.length;
+let currentSlide = 0;
+
+function renderDots() {
+  if (!dotsEl) return;
+  dotsEl.innerHTML = '';
+
+  slides.forEach((_, idx) => {
+    const dot = document.createElement('button');
+    dot.className = `dot ${idx === currentSlide ? 'active' : ''}`;
+    dot.type = 'button';
+    dot.setAttribute('aria-label', `slide ${idx + 1}`);
+    dot.addEventListener('click', () => goToSlide(idx));
+    dotsEl.appendChild(dot);
   });
 }
 
-// 送信ボタン処理
-function handleSubmit() {
-  const text = textarea ? textarea.value.trim() : '';
-  const output = document.getElementById('output');
-  const outputText = document.getElementById('output-text');
+function goToSlide(index) {
+  if (!slides.length) return;
 
-  if (!text) return;
-
-  if (output && outputText) {
-    outputText.textContent = text;
-    output.style.display = 'block';
-    output.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }
-}
-
-// Enterキーでの送信をサポート（Shift+Enterで改行）
-if (textarea) {
-  textarea.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit();
-    }
+  currentSlide = (index + slides.length) % slides.length;
+  slides.forEach((slide, idx) => {
+    slide.classList.toggle('active', idx === currentSlide);
   });
+
+  renderDots();
 }
+
+function nextSlide() {
+  goToSlide(currentSlide + 1);
+}
+
+function prevSlide() {
+  goToSlide(currentSlide - 1);
+}
+
+if (nextBtn) {
+  nextBtn.addEventListener('click', nextSlide);
+}
+
+if (prevBtn) {
+  prevBtn.addEventListener('click', prevSlide);
+}
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'ArrowRight') nextSlide();
+  if (event.key === 'ArrowLeft') prevSlide();
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  goToSlide(0);
+});
