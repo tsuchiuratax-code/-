@@ -1,39 +1,47 @@
 /**
- * アプリケーションメインスクリプト
- * テキスト入力デモの機能を管理する
+ * スライド操作ロジック
  */
 
-// 文字数カウント
-const textarea = document.getElementById('text-input');
-const countEl = document.getElementById('count');
+const slides = Array.from(document.querySelectorAll('.slide'));
+const prevBtn = document.getElementById('prev-btn');
+const nextBtn = document.getElementById('next-btn');
+const indicator = document.getElementById('slide-indicator');
+let currentIndex = 0;
 
-if (textarea && countEl) {
-  textarea.addEventListener('input', () => {
-    countEl.textContent = textarea.value.length;
+function showSlide(index) {
+  if (!slides.length) return;
+  currentIndex = (index + slides.length) % slides.length;
+
+  slides.forEach((slide, i) => {
+    slide.classList.toggle('active', i === currentIndex);
   });
-}
 
-// 送信ボタン処理
-function handleSubmit() {
-  const text = textarea ? textarea.value.trim() : '';
-  const output = document.getElementById('output');
-  const outputText = document.getElementById('output-text');
-
-  if (!text) return;
-
-  if (output && outputText) {
-    outputText.textContent = text;
-    output.style.display = 'block';
-    output.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  if (indicator) {
+    indicator.textContent = `${currentIndex + 1} / ${slides.length}`;
   }
 }
 
-// Enterキーでの送信をサポート（Shift+Enterで改行）
-if (textarea) {
-  textarea.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit();
-    }
-  });
+function nextSlide() {
+  showSlide(currentIndex + 1);
 }
+
+function prevSlide() {
+  showSlide(currentIndex - 1);
+}
+
+if (nextBtn) {
+  nextBtn.addEventListener('click', nextSlide);
+}
+
+if (prevBtn) {
+  prevBtn.addEventListener('click', prevSlide);
+}
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'ArrowRight') nextSlide();
+  if (event.key === 'ArrowLeft') prevSlide();
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  showSlide(0);
+});
