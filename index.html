@@ -3,93 +3,148 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title data-i18n="title">ChatGPT 5 vs Claude スライド</title>
+  <meta name="description" content="林税理士社労士事務所は、税理士・社会保険労務士・行政書士・中小企業診断士・宅建の視点から、税務、労務、許認可、入管、補助金、相続、不動産まで一つの窓口で支援します。">
+  <title>林税理士社労士事務所｜ワンストップで経営を支える専門家事務所</title>
   <link rel="stylesheet" href="src/style.css">
 </head>
 <body>
-  <header class="topbar">
-    <h1 data-i18n="appTitle">ChatGPT 5 変更点とClaude比較</h1>
-    <div class="lang-switcher">
-      <button id="lang-ja" class="lang-btn active" onclick="setLanguage('ja')">日本語</button>
-      <button id="lang-en" class="lang-btn" onclick="setLanguage('en')">English</button>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="#top" aria-label="林税理士社労士事務所トップへ">
+        <span class="logo-mark">林</span>
+        <span>
+          <strong>林税理士社労士事務所</strong>
+          <small>税務・労務・許認可・入管・経営支援</small>
+        </span>
+      </a>
+      <nav class="nav" aria-label="主要メニュー">
+        <a href="#service">サービス</a>
+        <a href="#specialty">専門分野</a>
+        <a href="#flow">相談の流れ</a>
+        <a class="nav-cta" href="#contact">相談する</a>
+      </nav>
     </div>
   </header>
 
-  <main class="deck-wrap">
-    <section class="deck-head">
-      <p class="kicker" data-i18n="kicker">スライド形式でサクッと理解</p>
-      <h2 data-i18n="deckTitle">ChatGPT 5で何が変わった？ Claudeよりどこが強い？</h2>
-      <p class="deck-note" data-i18n="deckNote">※ 実務で感じやすい差分に絞った要点比較です。用途によって最適解は変わります。</p>
-    </section>
-
-    <section class="slide-shell" aria-live="polite">
-      <article class="slide active" data-slide="0">
-        <span class="badge" data-i18n="slide1Badge">01 / 全体像</span>
-        <h3 data-i18n="slide1Title">ChatGPT 5の主要アップデート</h3>
-        <ul>
-          <li data-i18n="slide1Point1">推論の安定性が向上し、長い依頼でも回答のブレが減少。</li>
-          <li data-i18n="slide1Point2">長文コンテキスト処理の質が改善し、会話の文脈保持が強化。</li>
-          <li data-i18n="slide1Point3">テキスト・コード・要約・構成化の横断タスクがより一貫。</li>
-        </ul>
-      </article>
-
-      <article class="slide" data-slide="1">
-        <span class="badge" data-i18n="slide2Badge">02 / Claude比較</span>
-        <h3 data-i18n="slide2Title">Claudeより優れていると感じやすい点</h3>
-        <div class="compare-grid">
-          <div>
-            <h4 data-i18n="slide2Col1Title">ChatGPT 5の強み</h4>
-            <ul>
-              <li data-i18n="slide2Point1">曖昧な依頼を段階分解して、実行可能な手順に落とし込みやすい。</li>
-              <li data-i18n="slide2Point2">コード生成〜修正〜説明の往復が滑らかで、開発補助に強い。</li>
-              <li data-i18n="slide2Point3">出力スタイル制御（丁寧/簡潔/表形式など）の再現性が高い。</li>
-            </ul>
+  <main id="top">
+    <section class="hero">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow">一つの窓口で、経営の悩みをまとめて解決</p>
+          <h1>税務・労務・許認可・入管・補助金まで<br>ワンストップで支える専門家事務所</h1>
+          <p class="lead">林税理士社労士事務所は、税理士・社会保険労務士・行政書士・中小企業診断士・宅建の視点を組み合わせ、事業者の複雑な課題を一体で整理します。何度も説明し直す負担を減らし、実務に強い提案を行います。</p>
+          <div class="hero-actions">
+            <a class="btn primary" href="#contact">無料相談の入口へ</a>
+            <a class="btn secondary" href="#specialty">専門分野を見る</a>
           </div>
-          <div>
-            <h4 data-i18n="slide2Col2Title">使い分けの視点</h4>
-            <ul>
-              <li data-i18n="slide2Point4">長文読解や文章トーンはClaudeが好まれる場面もある。</li>
-              <li data-i18n="slide2Point5">最終的には「業務要件・精度・UI・コスト」で選ぶのが実用的。</li>
-            </ul>
+          <ul class="trust-list">
+            <li>茨城県県南エリア対応</li>
+            <li>中小企業・医療・建設・運送・介護・福祉に強い</li>
+            <li>AI活用と実務経験を組み合わせた支援</li>
+          </ul>
+        </div>
+        <div class="hero-card" aria-label="ワンストップ支援の概要">
+          <div class="mascot">🐕</div>
+          <h2>ワンストップ君</h2>
+          <p>税金・社会保険・許認可・補助金・相続を、ばらばらにせず一つの流れで確認します。</p>
+          <div class="cycle">
+            <span>税務</span>
+            <span>労務</span>
+            <span>許認可</span>
+            <span>経営</span>
+            <span>相続</span>
           </div>
         </div>
-      </article>
-
-      <article class="slide" data-slide="2">
-        <span class="badge" data-i18n="slide3Badge">03 / 実務メリット</span>
-        <h3 data-i18n="slide3Title">ChatGPT 5が効くユースケース</h3>
-        <ul>
-          <li data-i18n="slide3Point1">要件定義: ふわっとした要望から仕様書の叩き台を高速作成。</li>
-          <li data-i18n="slide3Point2">開発: バグ調査、テスト観点、リファクタ提案を一気通貫で支援。</li>
-          <li data-i18n="slide3Point3">企画/営業: 複数案を比較し、説得力ある資料構成に整える。</li>
-        </ul>
-      </article>
-
-      <article class="slide" data-slide="3">
-        <span class="badge" data-i18n="slide4Badge">04 / すぐ使える</span>
-        <h3 data-i18n="slide4Title">精度を引き出す3つのプロンプト型</h3>
-        <ol>
-          <li data-i18n="slide4Point1">「目的・前提・制約・出力形式」を最初に固定する。</li>
-          <li data-i18n="slide4Point2">中間レビューを挟み、方向性ズレを早期修正する。</li>
-          <li data-i18n="slide4Point3">最後に「抜け漏れチェック」を指示して品質を底上げする。</li>
-        </ol>
-      </article>
+      </div>
     </section>
 
-    <nav class="deck-controls" aria-label="slides">
-      <button id="prev-btn" class="nav-btn" data-i18n="prevBtn">← 前へ</button>
-      <div id="dots" class="dots" aria-hidden="true"></div>
-      <button id="next-btn" class="nav-btn" data-i18n="nextBtn">次へ →</button>
-    </nav>
+    <section class="section problem">
+      <div class="container two-col">
+        <div>
+          <p class="section-label">よくあるお悩み</p>
+          <h2>相談先が分かれるほど、経営判断は遅くなります。</h2>
+        </div>
+        <div class="problem-list">
+          <article><strong>税金だけでは判断できない</strong><p>役員報酬、社会保険、補助金、許認可要件まで一緒に見る必要があります。</p></article>
+          <article><strong>専門家ごとに説明が必要</strong><p>同じ内容を何度も説明する負担が生じ、判断も分断されます。</p></article>
+          <article><strong>制度改正への対応が大変</strong><p>税制、労務、入管、建設業、介護福祉の制度は常に変わります。</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="service" class="section">
+      <div class="container">
+        <p class="section-label">Service</p>
+        <h2 class="center-title">ワンストップで対応できること</h2>
+        <div class="service-grid">
+          <article class="service-card"><span>01</span><h3>税務・会計</h3><p>法人税、所得税、消費税、相続税、月次決算、資金繰り、税務調査対応まで支援します。</p></article>
+          <article class="service-card"><span>02</span><h3>労務・社会保険</h3><p>給与計算、社会保険、労働保険、就業規則、助成金、労務トラブルの予防を支援します。</p></article>
+          <article class="service-card"><span>03</span><h3>許認可・入管</h3><p>建設業許可、運送業許可、医療法人、入管取次、経営管理ビザ、永住申請まで対応します。</p></article>
+          <article class="service-card"><span>04</span><h3>経営支援・補助金</h3><p>事業計画、補助金、融資、経営改善、事業承継を、数字と現場の両面から支援します。</p></article>
+          <article class="service-card"><span>05</span><h3>相続・不動産</h3><p>相続税、事業承継、相続空き家、不動産活用、宅建の視点を含めて整理します。</p></article>
+          <article class="service-card"><span>06</span><h3>AI・DX支援</h3><p>会計データ、勤怠、資料作成、社内ナレッジ共有など、実務に使えるAI活用を提案します。</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="specialty" class="section specialty">
+      <div class="container">
+        <p class="section-label">Specialty</p>
+        <h2 class="center-title">業種別の専門支援</h2>
+        <div class="specialty-grid">
+          <a href="https://kensetuibaraki.netlify.app/" target="_blank" rel="noopener"><strong>建設業</strong><span>建設業許可・経審・労務・会計</span></a>
+          <a href="https://unsou-ibaraki-support.netlify.app/" target="_blank" rel="noopener"><strong>運送業</strong><span>許可・労務・社会保険・資金繰り</span></a>
+          <a href="http://tsuchiuratax.jp/medikal/" target="_blank" rel="noopener"><strong>医業・クリニック</strong><span>医療法人化・税務・労務</span></a>
+          <a href="http://tsuchiuratax.jp/syakaifukushihoujinn/" target="_blank" rel="noopener"><strong>社会福祉法人</strong><span>会計・労務・監査対応</span></a>
+          <a href="http://tsuchiuratax.jp/gyouseisyoshi/kaigo.html" target="_blank" rel="noopener"><strong>介護事業</strong><span>指定申請・処遇改善・労務</span></a>
+          <a href="http://tsuchiuratax.jp/banushizeikin/" target="_blank" rel="noopener"><strong>馬関連事業</strong><span>馬主・調教師・厩務員・育成牧場</span></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section strength">
+      <div class="container">
+        <p class="section-label">Strength</p>
+        <h2 class="center-title">選ばれる理由</h2>
+        <div class="strength-grid">
+          <article><h3>資格を横断して判断</h3><p>税理士、社労士、行政書士、中小企業診断士、宅建の視点を一つにまとめ、実行しやすい順番に整理します。</p></article>
+          <article><h3>現場に合わせた実務提案</h3><p>書類だけでなく、採用、資金繰り、許認可、補助金、相続まで、経営の流れに沿って支援します。</p></article>
+          <article><h3>AI活用で分かりやすく</h3><p>複雑な制度や数字を、図表・チェックリスト・説明資料に整理し、お客様が理解しやすい形にします。</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="flow" class="section flow">
+      <div class="container">
+        <p class="section-label">Flow</p>
+        <h2 class="center-title">ご相談の流れ</h2>
+        <ol class="flow-list">
+          <li><span>1</span><div><strong>お問い合わせ</strong><p>現在の状況と相談したい内容を簡単にお知らせください。</p></div></li>
+          <li><span>2</span><div><strong>初回ヒアリング</strong><p>税務、労務、許認可、資金繰りなど、関連する論点をまとめて確認します。</p></div></li>
+          <li><span>3</span><div><strong>課題整理と提案</strong><p>優先順位をつけ、必要な手続き・書類・スケジュールを分かりやすく提示します。</p></div></li>
+          <li><span>4</span><div><strong>実行支援</strong><p>申告、申請、規程整備、補助金、経営改善まで継続して支援します。</p></div></li>
+        </ol>
+      </div>
+    </section>
+
+    <section id="contact" class="section cta">
+      <div class="container cta-box">
+        <p class="section-label">Contact</p>
+        <h2>まずは一つの窓口でご相談ください。</h2>
+        <p>税金だけ、労務だけ、許認可だけでは解決しにくい課題を、まとめて整理します。</p>
+        <div class="contact-actions">
+          <a class="btn primary" href="tel:0298864388">電話する：029-886-4388</a>
+          <a class="btn secondary" href="http://tsuchiuratax.jp" target="_blank" rel="noopener">公式サイトを見る</a>
+        </div>
+      </div>
+    </section>
   </main>
 
-  <footer>
-    <p data-i18n="footer">© 2026 AI比較スライド | ChatGPT 5 と Claude の実務目線まとめ</p>
+  <footer class="footer">
+    <div class="container footer-inner">
+      <p>© 林税理士社労士事務所</p>
+      <p>茨城県県南エリアの税務・労務・許認可・入管・経営支援</p>
+    </div>
   </footer>
-
-  <script src="locales/ja.js"></script>
-  <script src="locales/en.js"></script>
-  <script src="src/i18n.js"></script>
-  <script src="src/app.js"></script>
 </body>
 </html>
