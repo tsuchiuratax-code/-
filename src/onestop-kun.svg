@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="220" viewBox="0 0 220 220" role="img" aria-label="ワンストップ君">
+  <circle cx="110" cy="110" r="100" fill="#f2f8ff"/>
+  <circle cx="78" cy="95" r="12" fill="#1b2750"/>
+  <circle cx="142" cy="95" r="12" fill="#1b2750"/>
+  <path d="M70 145 Q110 178 150 145" stroke="#1b2750" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <text x="110" y="48" text-anchor="middle" font-size="20" fill="#6ea8fe">ワンストップ君</text>
+</svg>

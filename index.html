@@ -68,7 +68,7 @@
         <h2 class="center-title">採用ページ動画</h2>
         <p>事務所の雰囲気や業務内容が分かるYouTube動画です。</p>
         <div class="video-wrap">
-          <iframe src="https://www.youtube.com/embed/2KTNIGlWo0w" title="採用動画" loading="lazy" allowfullscreen></iframe>
+          <iframe src="https://www.youtube-nocookie.com/embed/2KTNIGlWo0w" title="採用動画" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
         </div>
       </div>
     </section>
@@ -78,7 +78,7 @@
         <p class="section-label">Index Movie</p>
         <h2 class="center-title">トップページ紹介動画</h2>
         <div class="video-wrap">
-          <iframe src="https://www.youtube.com/embed/ZIJj06O2YRg" title="トップ紹介動画" loading="lazy" allowfullscreen></iframe>
+          <iframe src="https://www.youtube-nocookie.com/embed/ZIJj06O2YRg" title="トップ紹介動画" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
         </div>
       </div>
     </section>
@@ -88,7 +88,7 @@
         <p class="section-label">Chatbot</p>
         <h2 class="center-title">ワンストップ君チャット</h2>
         <p>よくある質問に自動回答します。</p>
-        <img class="onestop-kun" alt="ワンストップ君" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><circle cx='110' cy='110' r='100' fill='%23f2f8ff'/><circle cx='78' cy='95' r='12' fill='%231b2750'/><circle cx='142' cy='95' r='12' fill='%231b2750'/><path d='M70 145 Q110 178 150 145' stroke='%231b2750' stroke-width='10' fill='none' stroke-linecap='round'/><text x='110' y='48' text-anchor='middle' font-size='20' fill='%236ea8fe'>ワンストップ君</text></svg>">
+        <img class="onestop-kun" alt="ワンストップ君" src="src/onestop-kun.svg"><circle cx='110' cy='110' r='100' fill='%23f2f8ff'/><circle cx='78' cy='95' r='12' fill='%231b2750'/><circle cx='142' cy='95' r='12' fill='%231b2750'/><path d='M70 145 Q110 178 150 145' stroke='%231b2750' stroke-width='10' fill='none' stroke-linecap='round'/><text x='110' y='48' text-anchor='middle' font-size='20' fill='%236ea8fe'>ワンストップ君</text></svg>">
         <div class="chatbot-box">
           <input id="chat-input" type="text" placeholder="例：相談方法、料金、対応エリア" />
           <button id="chat-send" type="button">送信</button>
@@ -117,7 +117,7 @@
       const send = document.getElementById('chat-send');
       const response = document.getElementById('chat-response');
       if (!input || !send || !response) return;
-      send.addEventListener('click', () => {
+      const reply = () => {
         const q = input.value.trim();
         if (!q) return;
         const text = q.includes('料金') ? '料金は内容に応じて個別見積です。初回相談でご案内します。' :
@@ -125,6 +125,10 @@
           q.includes('相談') ? 'お電話またはFAX、公式サイト問い合わせからご連絡ください。' :
           'ありがとうございます。担当者が確認し、最適な窓口をご案内します。';
         response.textContent = `ワンストップ君：${text}`;
+      };
+      send.addEventListener('click', reply);
+      input.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') reply();
       });
     }());
   </script>
